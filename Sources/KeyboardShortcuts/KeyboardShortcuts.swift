@@ -50,6 +50,15 @@ public enum KeyboardShortcuts {
 	static var isPaused = false
 
 	/**
+	Restricts keyboard shortcuts to only fire when the modifier key is pressed on a specific physical side of the keyboard.
+
+	International users often need right Option (AltGr) for special characters. Set this to `.leftOnly` so shortcuts using Option only fire from the left Option key.
+
+	Applies to all registered shortcuts. Shortcuts with no modifier keys are unaffected.
+	*/
+	public static var modifierSideFilter: ModifierSideFilter = .any
+
+	/**
 	Enable/disable monitoring of all keyboard shortcuts.
 
 	The default is `true`.
@@ -479,6 +488,10 @@ public enum KeyboardShortcuts {
 			return
 		}
 
+		guard modifierSideFilter.allows(NSEvent.modifierFlags, for: shortcut.modifiers) else {
+			return
+		}
+
 		let handlers = eventType == .keyDown ? keyDownHandlers : keyUpHandlers
 		let streamHandlers = eventType == .keyDown ? streamKeyDownHandlers : streamKeyUpHandlers
 		let streamShortcutHandlers = eventType == .keyDown ? streamShortcutKeyDownHandlers : streamShortcutKeyUpHandlers
@@ -687,6 +700,47 @@ public enum KeyboardShortcuts {
 }
 
 extension KeyboardShortcuts {
+	/**
+	Controls which physical side of the keyboard a modifier key must be pressed on for a shortcut to fire.
+	*/
+	nonisolated public enum ModifierSideFilter: Sendable, Equatable {
+		case any
+		case leftOnly
+		case rightOnly
+
+		// Device-dependent modifier flag masks (IOLLEvent.h)
+		private static func leftBits(for modifier: NSEvent.ModifierFlags) -> UInt {
+			var bits: UInt = 0
+			if modifier.contains(.control) { bits |= 0x0000_0001 }
+			if modifier.contains(.shift) { bits |= 0x0000_0002 }
+			if modifier.contains(.command) { bits |= 0x0000_0008 }
+			if modifier.contains(.option) { bits |= 0x0000_0020 }
+			return bits
+		}
+
+		private static func rightBits(for modifier: NSEvent.ModifierFlags) -> UInt {
+			var bits: UInt = 0
+			if modifier.contains(.shift) { bits |= 0x0000_0004 }
+			if modifier.contains(.command) { bits |= 0x0000_0010 }
+			if modifier.contains(.option) { bits |= 0x0000_0040 }
+			if modifier.contains(.control) { bits |= 0x0000_2000 }
+			return bits
+		}
+
+		func allows(_ flags: NSEvent.ModifierFlags, for shortcutModifiers: NSEvent.ModifierFlags) -> Bool {
+			switch self {
+			case .any:
+				return true
+			case .leftOnly:
+				let bits = Self.leftBits(for: shortcutModifiers)
+				return bits == 0 || flags.rawValue & bits != 0
+			case .rightOnly:
+				let bits = Self.rightBits(for: shortcutModifiers)
+				return bits == 0 || flags.rawValue & bits != 0
+			}
+		}
+	}
+
 	nonisolated public enum EventType: Sendable, Equatable {
 		case keyDown
 		case keyUp
