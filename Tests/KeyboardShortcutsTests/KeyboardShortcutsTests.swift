@@ -625,8 +625,8 @@ struct KeyboardShortcutsTests {
 	func testDisableAndEnableWithStreamOnlyHandlers() async {
 		let shortcut = KeyboardShortcuts.Shortcut(.f12, modifiers: [.command, .option, .shift, .control])
 		let name = KeyboardShortcuts.Name("streamDisableEnable", initial: shortcut)
-		var stream: AsyncStream<KeyboardShortcuts.EventType>? = KeyboardShortcuts.events(for: name)
-		var iterator: AsyncStream<KeyboardShortcuts.EventType>.AsyncIterator? = stream?.makeAsyncIterator()
+		nonisolated(unsafe) var stream: AsyncStream<KeyboardShortcuts.EventType>? = KeyboardShortcuts.events(for: name)
+		nonisolated(unsafe) var iterator: AsyncStream<KeyboardShortcuts.EventType>.AsyncIterator? = stream?.makeAsyncIterator()
 		var waitingForEventTask: Task<Void, Never>? = Task {
 			_ = await iterator?.next()
 		}
@@ -1477,7 +1477,6 @@ struct KeyboardShortcutsTests {
 	}
 
 	@Test("NSMenuItem preserves original key equivalent when no global shortcut is set")
-	@MainActor
 	func testNSMenuItemPreservesOriginalKeyEquivalentWhenNoShortcut() {
 		let name = KeyboardShortcuts.Name("menuItemPreservesKeyEquivalent")
 
@@ -1492,7 +1491,6 @@ struct KeyboardShortcutsTests {
 	}
 
 	@Test("NSMenuItem restores original key equivalent when name binding is removed")
-	@MainActor
 	func testNSMenuItemRestoresOriginalKeyEquivalentWhenNameBindingRemoved() {
 		let name = KeyboardShortcuts.Name("menuItemBindingRemoved")
 		KeyboardShortcuts.setShortcut(.init(.t, modifiers: [.command]), for: name)
@@ -1511,7 +1509,6 @@ struct KeyboardShortcutsTests {
 	}
 
 	@Test("NSMenuItem preserves original fallback when switching names")
-	@MainActor
 	func testNSMenuItemPreservesFallbackWhenSwitchingNames() {
 		let name1 = KeyboardShortcuts.Name("menuItemSwitchName1")
 		let name2 = KeyboardShortcuts.Name("menuItemSwitchName2")
@@ -1537,7 +1534,6 @@ struct KeyboardShortcutsTests {
 	}
 
 	@Test("NSMenuItem restores original key equivalent when global shortcut is cleared")
-	@MainActor
 	func testNSMenuItemRestoresOriginalKeyEquivalentWhenShortcutCleared() async {
 		let name = KeyboardShortcuts.Name("menuItemRestoresKeyEquivalent")
 		let globalShortcut = KeyboardShortcuts.Shortcut(.t, modifiers: [.command, .shift])

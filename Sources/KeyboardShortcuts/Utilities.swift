@@ -462,7 +462,7 @@ extension NSEvent.SpecialKey {
 }
 
 
-enum AssociationPolicy {
+nonisolated enum AssociationPolicy {
 	case assign
 	case retainNonatomic
 	case copyNonatomic
@@ -485,7 +485,7 @@ enum AssociationPolicy {
 	}
 }
 
-final class ObjectAssociation<T> {
+nonisolated final class ObjectAssociation<T> {
 	private let policy: AssociationPolicy
 
 	init(policy: AssociationPolicy = .retainNonatomic) {

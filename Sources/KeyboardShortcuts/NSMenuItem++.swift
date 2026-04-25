@@ -2,7 +2,7 @@
 import AppKit
 
 extension NSMenuItem {
-	private final class WeakReference<T: AnyObject>: @unchecked Sendable {
+	nonisolated private final class WeakReference<T: AnyObject>: @unchecked Sendable {
 		weak var value: T?
 
 		init(_ value: T) {
