@@ -488,9 +488,11 @@ public enum KeyboardShortcuts {
 			return
 		}
 
-		let currentFlags = NSEvent.ModifierFlags(rawValue: UInt(CGEventSource.flagsState(.combinedSessionState).rawValue))
-		guard modifierSideFilter.allows(currentFlags, for: shortcut.modifiers) else {
-			return
+		if modifierSideFilter != .any {
+			let currentFlags = NSEvent.ModifierFlags(rawValue: UInt(CGEventSource.flagsState(.combinedSessionState).rawValue))
+			guard modifierSideFilter.allows(currentFlags, for: shortcut.modifiers) else {
+				return
+			}
 		}
 
 		let handlers = eventType == .keyDown ? keyDownHandlers : keyUpHandlers
