@@ -727,7 +727,7 @@ extension KeyboardShortcuts {
 			return bits
 		}
 
-		func allows(_ flags: NSEvent.ModifierFlags, for shortcutModifiers: NSEvent.ModifierFlags) -> Bool {
+		public func allows(_ flags: NSEvent.ModifierFlags, for shortcutModifiers: NSEvent.ModifierFlags) -> Bool {
 			switch self {
 			case .any:
 				return true
