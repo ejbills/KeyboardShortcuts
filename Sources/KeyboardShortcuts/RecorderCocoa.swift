@@ -295,6 +295,18 @@ extension KeyboardShortcuts {
 		@_documentation(visibility: private)
 		public func controlTextDidEndEditing(_ object: Notification) {
 			endRecording()
+
+			// AppKit's gesture-based control tracking (macOS 26+) ends the freshly
+			// started editing session right after the focusing click and re-opens
+			// plain editing without another becomeFirstResponder; re-arm recording
+			// when focus stayed on this field so it doesn't degrade into a text field.
+			DispatchQueue.main.async { [weak self] in
+				guard let self, isEffectivelyFocused else {
+					return
+				}
+
+				startRecording()
+			}
 		}
 
 		@_documentation(visibility: private)
@@ -349,6 +361,27 @@ extension KeyboardShortcuts {
 				return shouldBecomeFirstResponder
 			}
 
+			startRecording()
+			return shouldBecomeFirstResponder
+		}
+
+		private var isEffectivelyFocused: Bool {
+			guard let firstResponder = window?.firstResponder else {
+				return false
+			}
+
+			if firstResponder === self {
+				return true
+			}
+
+			return (firstResponder as? NSTextView)?.delegate === self
+		}
+
+		private func startRecording() {
+			guard eventMonitor == nil else {
+				return
+			}
+
 			placeholderString = "press_shortcut".localized
 			showsCancelButton = !stringValue.isEmpty
 			hideCaret()
@@ -371,8 +404,11 @@ extension KeyboardShortcuts {
 					return event
 				}
 
+				// Never consume mouse events: swallowing the mouse-up of the click that
+				// focused the field leaves the field editor's click unfinished and AppKit
+				// stops delivering keyDown events entirely (observed on macOS 26+).
 				guard event.isKeyEvent else {
-					return nil
+					return event
 				}
 
 				if event.modifiers.isEmpty {
@@ -439,8 +475,18 @@ extension KeyboardShortcuts {
 
 				return nil
 			}.start()
+		}
 
-			return shouldBecomeFirstResponder
+		@_documentation(visibility: private)
+		override public func mouseDown(with event: NSEvent) {
+			super.mouseDown(with: event)
+
+			// Gesture-based control tracking (macOS 26+) can leave a focused field in
+			// plain editing with recording torn down; any click that lands with focus
+			// on this field re-arms recording.
+			if isEffectivelyFocused {
+				startRecording()
+			}
 		}
 
 		private func saveShortcut(_ shortcut: Shortcut?) {
