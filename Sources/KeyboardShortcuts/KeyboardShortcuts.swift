@@ -47,7 +47,12 @@ public enum KeyboardShortcuts {
 	/**
 	When `true`, event handlers will not be called for registered keyboard shortcuts.
 	*/
-	static var isPaused = false
+	/**
+	Whether shortcut handling is paused, which is the case while a recorder is capturing.
+
+	Apps that match shortcuts through their own event taps should skip handling while this is `true`, and recorders outside this package should set it while they capture.
+	*/
+	public static var isPaused = false
 
 	/**
 	Restricts keyboard shortcuts to only fire when the modifier key is pressed on a specific physical side of the keyboard.
